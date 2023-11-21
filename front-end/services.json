@@ -1,0 +1,44 @@
+[
+    {
+      "id": "1",
+      "name": "Oil Change",
+      "price": 40.0,
+      "description": "Regular oil change service",
+      "duration": "01:00"
+    },
+    {
+      "id": "2",
+      "name": "Brake Inspection",
+      "price": 30.0,
+      "description": "Thorough inspection of brake system",
+      "duration": "00:45"
+    },
+    {
+      "id": "3",
+      "name": "Tire Rotation",
+      "price": 20.0,
+      "description": "Rotating tires to ensure even wear",
+      "duration": "00:30"
+    },
+    {
+      "id": "4",
+      "name": "Diagnostic Check",
+      "price": 50.0,
+      "description": "Comprehensive diagnostic check",
+      "duration": "01:30"
+    },
+    {
+      "id": "5",
+      "name": "Air Conditioning Service",
+      "price": 60.0,
+      "description": "Checking and servicing the air conditioning system",
+      "duration": "02:00"
+    },
+    {
+      "id": "6",
+      "name": "Engine Tune-Up",
+      "price": 80.0,
+      "description": "Optimizing engine performance",
+      "duration": "02:30"
+    }
+  ]
