@@ -4,8 +4,8 @@ const app = Vue.createApp({
             reservations: [],
             services: [],
             newReservation: {
-                phoneNumber: '',
                 name: '',
+                serviceId: '',
                 time: '',
                 salon: '',
                 service: '',
@@ -27,34 +27,31 @@ const app = Vue.createApp({
     },
     async mounted() {
         await this.loadUser();
-        this.reservations = await (await fetch('http://localhost:8080/reservations')).json();
+        this.reservations = await (await fetch('https://localhost:7010/getReservations')).json();
         this.services = await (await fetch('http://localhost:8080/services')).json();
     },
     methods: {
         async loadUser() {
             try {
-                const response = await fetch('http://localhost:8080/get-user-info');
+                const response = await fetch('https://localhost:7010/User/getLoggedInUser');
                 if (response.ok) {
                     const userData = await response.json();
-                    this.isAdmin = userData.isAdmin ? 1 : 0;
-                    this.userId = userData.id;
-                    this.newReservation.name = userData.name;
+                    console.log(userData);
+                    this.isAdmin = userData.IsAdmin;
+                    this.userId = userData.Id;
+                    this.newReservation.name = userData.Name;
                 } else {
-                    console.error('Error loading user data:', response.statusText);
+                    //window.location.href = 'login.html';
+                    console.error('Error loading response:', response.statusText);
                 }
             } catch (error) {
+                //window.location.href = 'login.html';
                 console.error('Error loading user data:', error);
             }
         },
         deleteReservation: async function (id) {
-            const reservationToDelete = this.reservations.find(reservation => reservation.id === id);
-            if (!reservationToDelete) {
-                console.error('Reservation was not found:', id);
-                return;
-            }
-        
             try {
-                await fetch(`http://localhost:8080/reservations/${id}`, {
+                await fetch(`https://localhost:7010/deleteReservation/${id}`, {
                     method: 'DELETE'
                 });
                 this.reservations = this.reservations.filter(reservation => reservation.id !== id);
@@ -79,40 +76,21 @@ const app = Vue.createApp({
             }
         },
         async addReservation() {
-            if (!this.newReservation.phoneNumber || !this.newReservation.name || !this.newReservation.time || !this.newReservation.salon || !this.newReservation.service || !this.newReservation.carNumber) {
+            this.newReservation.serviceId = 1;
+
+            if (!this.newReservation.time || !this.newReservation.salon || !this.newReservation.serviceId || !this.newReservation.carNumber) {
                 alert('Please fill in all fields with valid data.');
                 return;
             }
         
             try {
-                const selectedService = this.services.find(service => service.name === this.newReservation.service);
-                if (!selectedService) {
-                    console.error('Selected service not found:', this.newReservation.service);
-                    return;
-                }
-        
-                this.newReservation.service = selectedService;
-        
-                const response = await fetch('http://localhost:8080/reservations', {
+                await fetch(`https://localhost:7010/addReservation/${this.newReservation.clientId}/${this.newReservation.serviceId}/${this.newReservation.time}/${this.newReservation.salon}/${this.newReservation.carNumber}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(this.newReservation)
                 });
-        
-                if (response.ok) {
-                    const newReservation = await response.json();
-                    this.reservations.push(newReservation);
-                    this.newReservation = {
-                        phoneNumber: '',
-                        name: '',
-                        time: '',
-                        salon: '',
-                        service: '',
-                        carNumber: ''
-                    };
-                }
             } catch (error) {
                 console.error('Unable to add a new reservation:', error);
             }
@@ -220,7 +198,7 @@ const app = Vue.createApp({
         },
         async logout() {
             try {
-                const response = await fetch('http://localhost:8080/logout', {
+                const response = await fetch('https://localhost:7010/User/logout', {
                     method: 'POST',
                 });
 

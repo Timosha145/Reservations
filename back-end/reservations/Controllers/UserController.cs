@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using reservations.data;
 using reservations.models;
+using Microsoft.AspNetCore.Http;
+using System.Text.Json;
 
 namespace reservations.Controllers
 {
@@ -10,16 +13,45 @@ namespace reservations.Controllers
     public class UserController : Controller
     {
         private readonly ReservationsDbContext _context;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public UserController(ReservationsDbContext context)
+        public UserController(ReservationsDbContext context, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
+            _httpContextAccessor = httpContextAccessor;
         }
 
-        [HttpGet]
-        public List<User> Get()
+        private User? _loggedInUser
         {
-            return _context.Users.ToList(); ;
+            get
+            {
+                var userJson = _httpContextAccessor.HttpContext?.Session.GetString("LoggedInUser");
+                return userJson != null ? JsonSerializer.Deserialize<User>(userJson) : null;
+            }
+            set
+            {
+                var userJson = JsonSerializer.Serialize(value);
+                _httpContextAccessor.HttpContext?.Session.SetString("LoggedInUser", userJson);
+            }
+        }
+
+        [HttpGet("getUsers")]
+        public List<User> GetUsers()
+        {
+            return _context.GetAllUsers();
+        }
+
+        [HttpGet("getLoggedInUser")]
+        public IActionResult GetLoggedInUser()
+        {
+            if (_loggedInUser != null)
+            {
+                return Ok(JsonSerializer.Serialize(_loggedInUser));
+            }
+            else
+            {
+                return NotFound();
+            }
         }
 
         [HttpPost("login/{email}/{password}")]
@@ -30,20 +62,14 @@ namespace reservations.Controllers
                 return BadRequest(new { error = "Both email and password are required" });
             }
 
-            var user = _context.GetUserByCredentials(email, password);
+            User? userResponse = _context.GetUserByCredentials(email, password);
 
-            if (user == null)
+            if (userResponse == null)
             {
                 return Unauthorized(new { error = "Invalid email or password" });
             }
 
-            var userResponse = new
-            {
-                id = user.Id,
-                name = user.Name,
-                email = user.Email,
-                isAdmin = user.IsAdmin
-            };
+            _loggedInUser = userResponse;
 
             return Ok(new { message = "Login successful", user = userResponse });
         }
@@ -68,6 +94,14 @@ namespace reservations.Controllers
             _context.SaveChanges();
 
             return Ok(new { message = "Login successful" });
+        }
+
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            _loggedInUser = null;
+
+            return Ok(new { message = "Logout successful" });
         }
     }
 }

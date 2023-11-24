@@ -16,11 +16,13 @@ const loginApp = Vue.createApp({
                 const response = await fetch(`https://localhost:7010/User/login/${encodeURIComponent(this.email)}/${encodeURIComponent(this.password)}`, {
                     method: 'POST',
                 });
-
                 if (response.ok) {
-                    const data = await response.json();
                     alert('Login successful.');
-                    window.location.href = 'index.html';
+                    const response = await fetch('https://localhost:7010/User/getLoggedInUser', {
+                        method: 'POST',
+                    });
+                    console.log('JSON: ' + await response.json())
+                    //window.location.href = 'index.html';
                 } else {
                     const data = await response.json();
                     alert(`Login failed: ${data.error}`);

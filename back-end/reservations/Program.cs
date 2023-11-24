@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using reservations.data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddDbContext<ReservationsDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
@@ -12,7 +13,6 @@ builder.Services.AddDbContext<ReservationsDbContext>(options =>
 
 builder.Services.AddCors(options =>
 {
-
     options.AddDefaultPolicy(
         policy =>
         {
@@ -22,7 +22,12 @@ builder.Services.AddCors(options =>
         });
 });
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddMvc().AddSessionStateTempDataProvider();
+builder.Services.AddSession();
+
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -41,6 +46,8 @@ app.UseCors();
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseSession();
 
 app.MapControllers();
 
