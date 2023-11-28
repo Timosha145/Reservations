@@ -4,7 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using reservations.data;
 using reservations.models;
 using Microsoft.AspNetCore.Http;
-using System.Text.Json;
+using Newtonsoft.Json;
+using System.Diagnostics;
 
 namespace reservations.Controllers
 {
@@ -21,37 +22,16 @@ namespace reservations.Controllers
             _httpContextAccessor = httpContextAccessor;
         }
 
-        private User? _loggedInUser
-        {
-            get
-            {
-                var userJson = _httpContextAccessor.HttpContext?.Session.GetString("LoggedInUser");
-                return userJson != null ? JsonSerializer.Deserialize<User>(userJson) : null;
-            }
-            set
-            {
-                var userJson = JsonSerializer.Serialize(value);
-                _httpContextAccessor.HttpContext?.Session.SetString("LoggedInUser", userJson);
-            }
-        }
-
         [HttpGet("getUsers")]
         public List<User> GetUsers()
         {
             return _context.GetAllUsers();
         }
 
-        [HttpGet("getLoggedInUser")]
-        public IActionResult GetLoggedInUser()
+        [HttpGet("getUserData/{id}")]
+        public User? GetUsers(int id)
         {
-            if (_loggedInUser != null)
-            {
-                return Ok(JsonSerializer.Serialize(_loggedInUser));
-            }
-            else
-            {
-                return NotFound();
-            }
+            return _context.GetUserById(id);
         }
 
         [HttpPost("login/{email}/{password}")]
@@ -68,18 +48,18 @@ namespace reservations.Controllers
             {
                 return Unauthorized(new { error = "Invalid email or password" });
             }
-
-            _loggedInUser = userResponse;
-
-            return Ok(new { message = "Login successful", user = userResponse });
+            else
+            {
+                return Ok(new { message = "Login successful", user = userResponse });
+            }
         }
 
-        [HttpPost("register/{name}/{email}/{password}")]
-        public IActionResult Register(string name, string email, string password)
+        [HttpPost("register/{name}/{email}/{phoneNumber}/{password}")]
+        public IActionResult Register(string name, string email, string phoneNumber, string password)
         {
-            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(phoneNumber) || string.IsNullOrEmpty(password))
             {
-                return BadRequest(new { error = "Name, email, and password are required" });
+                return BadRequest(new { error = "Name, email, phone number, and password are required" });
             }
 
             var existingUser = _context.Users.FirstOrDefault(u => u.Email == email);
@@ -89,19 +69,11 @@ namespace reservations.Controllers
                 return Conflict(new { error = "This email has already been taken" });
             }
 
-            var newUser = new User(name, email, password, isAdmin: false);
+            var newUser = new User(name, email, phoneNumber, password, isAdmin: false);
             _context.Users.Add(newUser);
             _context.SaveChanges();
 
             return Ok(new { message = "Login successful" });
-        }
-
-        [HttpPost("logout")]
-        public IActionResult Logout()
-        {
-            _loggedInUser = null;
-
-            return Ok(new { message = "Logout successful" });
         }
     }
 }

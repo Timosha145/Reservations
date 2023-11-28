@@ -24,7 +24,11 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMvc().AddSessionStateTempDataProvider();
-builder.Services.AddSession();
+builder.Services.AddSession(options =>
+{
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+});
 
 builder.Services.AddControllers();
 

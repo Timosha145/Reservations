@@ -18,35 +18,64 @@ const app = Vue.createApp({
                 description: '',
                 duration: ''
             },
+            user: {
+                id: '',
+                name: '',
+                phoneNumber: '',
+                email: ''
+            },
             editingReservation: null,
             editingService: null,
             isEditing: false,
             isAdmin: 0,
-            userId: null
+            userId: null,
         };
     },
     async mounted() {
         await this.loadUser();
-        this.reservations = await (await fetch('https://localhost:7010/getReservations')).json();
-        this.services = await (await fetch('http://localhost:8080/services')).json();
+        await this.loadReservations();
+        console.log(this.reservations);
+        this.services = await (await fetch('https://localhost:7010/getServices')).json();
     },
     methods: {
+        async loadReservations() {
+            this.reservations = await (await fetch('https://localhost:7010/getReservations')).json();
+
+            for (const reservation of this.reservations) {
+                try {
+                    const userData = await (await fetch(`https://localhost:7010/User/getUserData/${reservation.clientId}`)).json();
+                    reservation.service = await (await fetch(`https://localhost:7010/getServiceById/${reservation.serviceId}`)).json();
+                    reservation.name = userData.name;
+                    reservation.phoneNumber = userData.phoneNumber;
+                } catch (error) {
+                    console.error('Error fetching user or service data:', error);
+                }
+            }
+        },
         async loadUser() {
             try {
-                const response = await fetch('https://localhost:7010/User/getLoggedInUser');
-                if (response.ok) {
-                    const userData = await response.json();
-                    console.log(userData);
-                    this.isAdmin = userData.IsAdmin;
-                    this.userId = userData.Id;
-                    this.newReservation.name = userData.Name;
+                const user = localStorage.getItem('user');
+                if (user != null) {
+                    const userData = JSON.parse(user);
+
+                    this.user = userData;
+                    this.isAdmin = userData.isAdmin;
+                    this.userId = userData.id;
+                    this.newReservation.name = userData.name;
+                    this.newReservation.phoneNumber = userData.phoneNumber;
                 } else {
                     //window.location.href = 'login.html';
-                    console.error('Error loading response:', response.statusText);
                 }
             } catch (error) {
                 //window.location.href = 'login.html';
-                console.error('Error loading user data:', error);
+                console.error('Error loading user data');
+            }
+        },
+        getUserData: async function (id) {
+            try {
+                return await (await fetch(`https://localhost:7010/User/getUserData/${id}`)).json();
+            } catch (error) {
+                console.error('Could not find user');
             }
         },
         deleteReservation: async function (id) {
@@ -54,9 +83,9 @@ const app = Vue.createApp({
                 await fetch(`https://localhost:7010/deleteReservation/${id}`, {
                     method: 'DELETE'
                 });
-                this.reservations = this.reservations.filter(reservation => reservation.id !== id);
+                location.reload();
             } catch (error) {
-                console.error('Couldnt delete a reservation:', error);
+                console.error('Could not delete a reservation:', error);
             }
         },
         deleteService: async function (id) {
@@ -76,21 +105,21 @@ const app = Vue.createApp({
             }
         },
         async addReservation() {
-            this.newReservation.serviceId = 1;
-
-            if (!this.newReservation.time || !this.newReservation.salon || !this.newReservation.serviceId || !this.newReservation.carNumber) {
+            if (!this.newReservation.time || !this.newReservation.salon || !this.newReservation.service || !this.newReservation.carNumber) {
                 alert('Please fill in all fields with valid data.');
                 return;
             }
         
             try {
-                await fetch(`https://localhost:7010/addReservation/${this.newReservation.clientId}/${this.newReservation.serviceId}/${this.newReservation.time}/${this.newReservation.salon}/${this.newReservation.carNumber}`, {
+                await fetch(`https://localhost:7010/addReservation/${this.userId}/${this.newReservation.service.id}/${this.newReservation.time}/${this.newReservation.salon}/${this.newReservation.carNumber}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(this.newReservation)
                 });
+                alert('Reservation was added!');
+                location.reload();
             } catch (error) {
                 console.error('Unable to add a new reservation:', error);
             }
@@ -126,14 +155,6 @@ const app = Vue.createApp({
         },
         editReservation(reservation) {
             this.editingReservation = { ...reservation };
-            const selectedService = this.services.find(service => service.name == this.editingReservation.service.name);
-        
-            if (selectedService) {
-                this.editingReservation.service = selectedService;
-            } else {
-                console.error('Selected service not found:', this.editingReservation.service);
-            }
-        
             this.isEditing = true;
         },
         editService(service) {
@@ -149,27 +170,29 @@ const app = Vue.createApp({
             this.isEditing = false;
         },
         async saveEdit(reservation) {
+            if (!this.editingReservation.service || !this.editingReservation.date || !this.editingReservation.salon || !this.editingReservation.carNumber) {
+                alert('Please fill in all fields with valid data.');
+                return;
+            }
+
             try {
-                const response = await fetch(`http://localhost:8080/reservations/${reservation.id}`, {
-                    method: 'PUT',
+                const response = await fetch(`https://localhost:7010/editReservation/${reservation.id}/${this.userId}/${this.editingReservation.service.id}/${this.editingReservation.date}/${this.editingReservation.salon}/${this.editingReservation.carNumber}`, {
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(this.editingReservation)
                 });
-        
+
                 if (response.ok) {
-                    const updatedReservation = await response.json();
-                    const index = this.reservations.findIndex(r => r.id === reservation.id);
-                    if (index !== -1) {
-                        this.reservations[index] = updatedReservation;
-                    }
-        
+                    console.log(response)
                     this.isEditing = false;
-                    this.editingReservation = null;
+                    location.reload();
+                } else {
+                    console.error('Failed to update reservation:', response.statusText);
                 }
             } catch (error) {
-                console.error('Unable to save edit:', error);
+                console.error('Unable to edit reservation:', error);
             }
         },
         async saveEditService(service) {
@@ -197,25 +220,20 @@ const app = Vue.createApp({
             }
         },
         async logout() {
-            try {
-                const response = await fetch('https://localhost:7010/User/logout', {
-                    method: 'POST',
-                });
-
-                if (response.ok) {
-                    window.location.href = 'login.html';
-                } else {
-                    console.error('Error logging out:', response.statusText);
-                }
-            } catch (error) {
-                console.error('Error logging out:', error);
-            }
+            localStorage.removeItem('user');
+            window.location.href = 'login.html'
         },
         async goToServices() {
             window.location.href='services.html';
         },
         async goToIndex() {
             window.location.href='index.html';
+        },
+        openReservationModal() {
+            $('#userSettingsModal').modal('show');
+        },
+        closeReservationModal() {
+            $('#userSettingsModal').modal('hide');
         },
     }
 }).mount('#app');

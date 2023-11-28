@@ -18,11 +18,9 @@ const loginApp = Vue.createApp({
                 });
                 if (response.ok) {
                     alert('Login successful.');
-                    const response = await fetch('https://localhost:7010/User/getLoggedInUser', {
-                        method: 'POST',
-                    });
-                    console.log('JSON: ' + await response.json())
-                    //window.location.href = 'index.html';
+                    const data = await response.json();
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = 'index.html';
                 } else {
                     const data = await response.json();
                     alert(`Login failed: ${data.error}`);

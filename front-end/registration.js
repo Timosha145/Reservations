@@ -4,6 +4,7 @@ const registrationApp = Vue.createApp({
             id: '',
             name: '',
             email: '',
+            phoneNumber: '',
             password: '',
         };
     },
@@ -12,13 +13,13 @@ const registrationApp = Vue.createApp({
     },
     methods: {
         async registerUser() {
-            if (!this.name || !this.email || !this.password) {
+            if (!this.name || !this.email || !this.phoneNumber || !this.password) {
                 alert('Please fill in all fields.');
                 return;
             }
 
             try {
-                const registerResponse = await fetch(`https://localhost:7010/User/register/${encodeURIComponent(this.name)}/${encodeURIComponent(this.email)}/${encodeURIComponent(this.password)}`, {
+                const registerResponse = await fetch(`https://localhost:7010/User/register/${encodeURIComponent(this.name)}/${encodeURIComponent(this.email)}/${encodeURIComponent(this.phoneNumber)}/${encodeURIComponent(this.password)}`, {
                     method: 'POST',
                 });
 

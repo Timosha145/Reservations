@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using reservations.data;
 
@@ -11,9 +12,11 @@ using reservations.data;
 namespace reservations.Migrations
 {
     [DbContext(typeof(ReservationsDbContext))]
-    partial class ReservationsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231128092911_userUpdate")]
+    partial class userUpdate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
