@@ -65,7 +65,7 @@
             <td>
                 <select v-model="newReservation.service">
                     <option value="">Select</option>
-                    <option v-for="service in services" :id="service.id" :key="service.name" :value="service" v-bind:title="service.price + '€, ' + service.duration">{{ service.name }}</option>
+                    <option v-for="service in services" :id="service.id" :key="service.name" :value="service" v-bind:title="service.price + '€, ' + formatDuration(service.duration)">{{ service.name }}</option>
                 </select>
             </td>
             <td>
@@ -106,11 +106,11 @@
                 <span v-if="isEditing && editingReservation.id === reservation.id">
                     <select v-model="editingReservation.service">
                         <option value="">Select</option>
-                <option v-for="service in services" :id="service.id" :key="service.name" :value="service" v-bind:title="service.price + '€, ' + service.duration">{{ service.name }}</option>
+                <option v-for="service in services" :id="service.id" :key="service.name" :value="service" v-bind:title="service.price + '€, ' + formatDuration(service.duration)">{{ service.name }}</option>
                     </select>
                 </span>
                 <span v-else>
-                    {{ reservation.service.name }}, {{ reservation.service.price }}€, {{ reservation.service.duration }}
+                    {{ reservation.service.name }}, {{ reservation.service.price }}€, {{ formatDuration(reservation.service.duration) }}
                 </span>
             </td>
             <td v-if="isAdmin || reservation.clientId == userId">

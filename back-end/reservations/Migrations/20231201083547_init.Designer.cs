@@ -12,7 +12,7 @@ using reservations.data;
 namespace reservations.Migrations
 {
     [DbContext(typeof(ReservationsDbContext))]
-    [Migration("20231128070352_init")]
+    [Migration("20231201083547_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -96,6 +96,9 @@ namespace reservations.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Password")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");

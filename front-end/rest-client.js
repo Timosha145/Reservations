@@ -64,10 +64,10 @@ const app = Vue.createApp({
                     this.newReservation.name = userData.name;
                     this.newReservation.phoneNumber = userData.phoneNumber;
                 } else {
-                    //window.location.href = 'login.html';
+                    window.location.href = 'login.html';
                 }
             } catch (error) {
-                //window.location.href = 'login.html';
+                window.location.href = 'login.html';
                 console.error('Error loading user data');
             }
         },
@@ -89,19 +89,13 @@ const app = Vue.createApp({
             }
         },
         deleteService: async function (id) {
-            const serviceToDelete = this.services.find(service => service.id === id);
-            if (!serviceToDelete) {
-                console.error('Service was not found:', id);
-                return;
-            }
-
             try {
-                await fetch(`http://localhost:8080/services/${id}`, {
+                await fetch(`https://localhost:7010/deleteService/${id}`, {
                     method: 'DELETE'
                 });
-                this.services = this.services.filter(service => service.id !== id);
+                location.reload();
             } catch (error) {
-                console.error('Couldnt delete a service:', error);
+                console.error('Could not delete a reservation:', error);
             }
         },
         async addReservation() {
@@ -131,24 +125,14 @@ const app = Vue.createApp({
             }
 
             try {
-                const response = await fetch('http://localhost:8080/services', {
+                const response = await fetch(`https://localhost:7010/addService/${encodeURIComponent(this.newService.name)}/${this.newService.price}/${encodeURIComponent(this.newService.description)}/${encodeURIComponent(this.newService.duration)}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(this.newService)
+                    }
                 });
-
-                if (response.ok) {
-                    const newService = await response.json();
-                    this.services.push(newService);
-                    this.newService = {
-                        name: '',
-                        price: '',
-                        description: '',
-                        duration: '',
-                    };
-                }
+                alert('Service was added!');
+                location.reload();
             } catch (error) {
                 console.error('Unable to add a new service:', error);
             }
@@ -196,25 +180,50 @@ const app = Vue.createApp({
             }
         },
         async saveEditService(service) {
+            if (!this.editingService.name || !this.editingService.price || !this.editingService.description || !this.editingService.duration) {
+                alert('Please fill in all fields with valid data.');
+                return;
+            }
+
             try {
-                const response = await fetch(`http://localhost:8080/services/${service.id}`, {
+                alert(`https://localhost:7010/updateService/${service.id}/${encodeURIComponent(this.editingService.name)}/${this.editingService.price}/${encodeURIComponent(this.editingService.description)}/${encodeURIComponent(this.editingService.duration)}`);
+                await fetch(`https://localhost:7010/updateService/${service.id}/${encodeURIComponent(this.editingService.name)}/${this.editingService.price}/${encodeURIComponent(this.editingService.description)}/${encodeURIComponent(this.editingService.duration)}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(this.editingService)
+                    }
+                });
+                this.isEditing = false;
+                this.editingService = null;
+                location.reload();
+            } catch (error) {
+                console.error('Unable to save edit:', error);
+            }
+        },
+        async saveUserSettings() {
+            if (!this.user.name || !this.user.email || !this.user.phoneNumber) {
+                alert('Please fill in all fields with valid data.');
+                return;
+            }
+
+            try {
+                const updatedUser = {
+                    name: encodeURIComponent(this.user.name),
+                    email: encodeURIComponent(this.user.email),
+                    phoneNumber: encodeURIComponent(this.user.phoneNumber)
+                };
+
+                alert(`https://localhost:7010/User/updateUserData/${this.user.id}/${updatedUser.name}/${updatedUser.email}/${updatedUser.phoneNumber}`);
+                await fetch(`https://localhost:7010/User/updateUserData/${this.user.id}/${updatedUser.name}/${updatedUser.email}/${updatedUser.phoneNumber}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 });
 
-                if (response.ok) {
-                    const updatedService = await response.json();
-                    const index = this.services.findIndex(r => r.id === service.id);
-                    if (index !== -1) {
-                        this.services[index] = updatedService;
-                    }
+                localStorage.setItem('user', JSON.stringify(this.user));
 
-                    this.isEditing = false;
-                    this.editingService = null;
-                }
+                location.reload();
             } catch (error) {
                 console.error('Unable to save edit:', error);
             }
@@ -234,6 +243,12 @@ const app = Vue.createApp({
         },
         closeReservationModal() {
             $('#userSettingsModal').modal('hide');
+        },
+        formatDuration(duration) {
+            const [hours, minutes] = duration.split(':');
+            const formattedHours = `${String(Number(hours)).padStart(2, '0')}H`;
+            const formattedMinutes = `${minutes}Min`;
+            return `${formattedHours} ${formattedMinutes}`;
         },
     }
 }).mount('#app');

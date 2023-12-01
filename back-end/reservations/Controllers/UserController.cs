@@ -75,5 +75,31 @@ namespace reservations.Controllers
 
             return Ok(new { message = "Login successful" });
         }
+
+        [HttpPut("updateUserData/{id}/{name}/{email}/{phoneNumber}")]
+        public IActionResult UpdateUserData(int id, string name, string email, string phoneNumber)
+        {
+            try
+            {
+                var existingUser = _context.GetUserById(id);
+
+                if (existingUser == null)
+                {
+                    return NotFound(new { error = "User not found" });
+                }
+
+                existingUser.Name = name;
+                existingUser.Email = email;
+                existingUser.PhoneNumber = phoneNumber;
+
+                _context.SaveChanges();
+
+                return Ok(new { message = "User data updated successfully", user = existingUser });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while updating user data", details = ex.Message });
+            }
+        }
     }
 }

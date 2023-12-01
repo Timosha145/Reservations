@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.6, maximum-scale=1.6">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Services</title>
+    <title>Car Service Reservations</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <style>
-        textarea, input {
+        select, input, textarea {
             width: 100%;
             height: 30px;
             min-height: 30px;
@@ -17,12 +17,13 @@
 </head>
 <body>
 <header class="bg-primary text-white p-4">
-    Services
+    Car Service Reservations
 </header>
 
 <div id="app">
     <button @click="logout" class="btn btn-danger" style="margin: 10px;">Logout</button>
     <button v-if="isAdmin" @click="goToIndex" class="btn btn-outline-secondary btn-sm" style="margin: 10px;">Reservations</button>
+    <button class="btn btn-outline-secondary btn-sm" @click="openReservationModal">⚙</button>
     <table id="reservationsTable" class="table table-striped table-bordered">
         <colgroup>
             <col style="width:5%">
@@ -43,6 +44,7 @@
         </tr>
         </thead>
         <tr>
+        <tr>
             <td></td>
             <td>
                 <input v-model="newService.name" placeholder="Name" type="text">
@@ -54,7 +56,7 @@
                 <textarea v-model="newService.description" placeholder="Description"></textarea>
             </td>
             <td>
-                <input type="time" v-model="newService.duration">
+                <input type="time" v-model="newService.duration" step="60">
             </td>
             <td>
                 <button @click="addService">Add Service</button>
@@ -90,14 +92,14 @@
             </td>
             <td v-if="isAdmin || service.clientId == userId">
                 <span v-if="isEditing && editingService.id === service.id">
-                    <input v-model="editingService.duration">
+                    <input type="time" v-model="editingService.duration" step="60">
                 </span>
                 <span v-else>
-                    {{ service.duration }}
+                    {{formatDuration(service.duration)}}
                 </span>
             </td>
             <td v-if="isAdmin || service.clientId == userId">
-                <button @click="isEditing ? saveEditService(service) : editService(service)">
+                <button @click="isEditing ? saveEditService (service) : editService(service)">
                     {{ isEditing && editingService.id === service.id ? 'Save' : 'Edit' }}
                 </button>
                 <button @click="deleteService(service.id)">Delete</button>
@@ -106,55 +108,32 @@
         </tr>
         </tbody>
     </table>
-</div>
 
-
-<div id="reservationInfoModal" class="modal fade" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">{{ reservationInModal.phoneNumber }} - {{ reservationInModal.name }}</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>Service: {{ reservationInModal.service }}</p>
-                <p>Car Number: {{ reservationInModal.carNumber }}</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+    <div id="userSettingsModal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">User Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Name: <input v-model="user.name"></p>
+                    <p>Email: <input v-model="user.email"></p>
+                    <p>Phone Number: <input v-model="user.phoneNumber"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" @click="saveUserSettings">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/vue@3.2.0/dist/vue.global.min.js"></script>
+</div>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.2.0/dist/vue.global.min.js"></script>
 <script src="rest-client.js"></script>
 
-<script>
-    async function checkAuthentication() {
-        try {
-            const response = await fetch('http://localhost:8080/check-login');
-
-            if (response.ok) {
-                const data = await response.json();
-
-                if (!data.isLoggedIn) {
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    });
-                }
-            } else {
-                console.error('Error checking authentication:', response.statusText);
-            }
-        } catch (error) {
-            console.error('Error checking authentication:', error);
-        }
-    }
-
-    checkAuthentication();
-</script>
 </body>
 </html>

@@ -101,5 +101,31 @@ namespace reservations.data
         {
             return Services.Find(id);
         }
+
+        public void EditService(Service editedService, int editedServiceId)
+        {
+            var existingService = GetServiceById(editedServiceId);
+
+            if (existingService != null)
+            {
+                existingService.Name = editedService.Name;
+                existingService.Price = editedService.Price;
+                existingService.Description = editedService.Description;
+                existingService.Duration = editedService.Duration;
+
+                SaveChanges();
+            }
+        }
+
+        public void DeleteService(int serviceId)
+        {
+            var serviceToDelete = GetServiceById(serviceId);
+
+            if (serviceToDelete != null)
+            {
+                Services.Remove(serviceToDelete);
+                SaveChanges();
+            }
+        }
     }
 }

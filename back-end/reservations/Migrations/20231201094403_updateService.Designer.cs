@@ -12,8 +12,8 @@ using reservations.data;
 namespace reservations.Migrations
 {
     [DbContext(typeof(ReservationsDbContext))]
-    [Migration("20231128092911_userUpdate")]
-    partial class userUpdate
+    [Migration("20231201094403_updateService")]
+    partial class updateService
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -64,8 +64,9 @@ namespace reservations.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<TimeSpan>("Duration")
-                        .HasColumnType("time");
+                    b.Property<string>("Duration")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
